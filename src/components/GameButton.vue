@@ -1,22 +1,20 @@
 <script>
-import { defineComponent } from 'vue';
-
-export default defineComponent({
+export default {
   name: 'GameButton',
   props: ['game', 'active'],
   emit: ['setActive']
-})
+}
 </script>
 
 <template>
-  <button v-if="game.name == active.name" class="poke-list-button-active">
+  <button v-if="game.name == active.name" class="poke-list-button active">
     <div class='poke-list-button-title' v-if="game.name.startsWith(`Légendes`)" :style="{ fontWeight: `bold` }">Légendes Pokémon : {{ game.name.slice(11) }}</div>
     <div class='poke-list-button-title' v-else :style="{ fontWeight: `bold` }">Pokémon {{ game.name }}</div>
     <div class='poke-list-button-circle' :style="{ backgroundColor: game.color }">
       <img class='poke-list-button-image' src="../assets/pokegame.png" alt="{{ game.name }}" />
     </div>
   </button>
-  <button v-else class="poke-list-button" @click="$emit('setActive')">
+  <button v-else class="poke-list-button inactive" @click="$emit('setActive')">
     <div class='poke-list-button-title' v-if="game.name.startsWith(`Légendes`)" :style="{ fontWeight: `bold` }">Légendes Pokémon : {{ game.name.slice(11) }}</div>
     <div class='poke-list-button-title' v-else :style="{ fontWeight: `bold` }">Pokémon {{ game.name }}</div>
     <div class='poke-list-button-circle' :style="{ backgroundColor: game.color }">
@@ -26,7 +24,7 @@ export default defineComponent({
 </template>
 
 <style>
-.poke-list-button, .poke-list-button-active {
+.poke-list-button {
   text-align: left;
   border-radius: 45px;
   font-size: 1.2vw;
@@ -37,14 +35,6 @@ export default defineComponent({
   display: flex;
   justify-content: space-between;
   min-height: 3vw;
-}
-
-.poke-list-button {
-  background-image: linear-gradient(#f77, white);
-}
-
-.poke-list-button-active {
-  background-image: linear-gradient(#77f, white);
 }
 
 .poke-list-button-circle {
