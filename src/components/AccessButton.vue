@@ -18,7 +18,7 @@ export default {
 <style>
 .poke-list-access-button {
     text-align: left;
-    border-radius: 15px;
+    border-radius: 5vh;
     font-size: 1.2vw;
     margin-bottom: 5px;
     margin-top: 5px;
@@ -26,7 +26,7 @@ export default {
     padding-top: 0;
     display: flex;
     justify-content: space-between;
-    min-height: 1vw;
+    min-height: 1vh;
     width: 100%;
 }
 </style>

@@ -26,7 +26,7 @@ export default {
 <style>
 .poke-list-button {
   text-align: left;
-  border-radius: 45px;
+  border-radius: 1.5vw;
   font-size: 1.2vw;
   margin-bottom: 5px;
   margin-top: 5px;
