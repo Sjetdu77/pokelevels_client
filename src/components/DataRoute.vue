@@ -53,4 +53,8 @@ export default {
     font-weight: bold;
     color: red;
 }
+
+#poke-data-mean {
+    font-size: 1.3vw;
+}
 </style>

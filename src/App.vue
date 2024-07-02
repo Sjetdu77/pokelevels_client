@@ -9,6 +9,7 @@
       <div id="poke-main" v-if="route && wilds && species">
         <MainComponent @setLevel="setLevel" :route="route" :wilds="wilds" :species="species"
           :level="level" :allXP="allXP" :mean="mean" :mode="mode" />
+        <TimeList @setTime="setTime" :time="time" />
         <AccessList @setAccess="setAccess" :accesses="accesses" :actual="actual" />
       </div>
       <div id="poke-choose" v-else-if="!active.id">Choisissez un jeu</div>
@@ -20,7 +21,8 @@
 import GameList from './components/GameList.vue';
 import PokeHeader from './components/PokeHeader.vue';
 import MainComponent from './components/MainComponent.vue';
-import AccessList from './components/AccessList.vue'
+import AccessList from './components/AccessList.vue';
+import TimeList from './components/TimeList.vue';
 import axios from 'axios';
 
 export default {
@@ -29,7 +31,8 @@ export default {
     PokeHeader,
     GameList,
     MainComponent,
-    AccessList
+    AccessList,
+    TimeList
   },
   data() {
     return {
@@ -45,7 +48,8 @@ export default {
       mean: null,
       mode: '',
       species: {},
-      level: 100
+      level: 100,
+      time: 'a'
     }
   },
   mounted() {
@@ -56,7 +60,7 @@ export default {
   methods: {
     setLevel(lvl) {
       this.level = lvl;
-      this.setRoutes();
+      this.setRoute();
     },
 
     async onSetActive(game) {
@@ -79,15 +83,20 @@ export default {
         this.allRoutes = proxy.data;
       }
 
-      this.setAccess(0);
+      this.setAccess(accesses.length - 1);
     },
 
-    async setAccess(num) {
+    setAccess(num) {
       this.actual = num;
-      this.setRoutes();
+      this.setRoute();
+    },
+
+    setTime(t) {
+      this.time = t;
+      this.setRoute();
     },
     
-    async setRoutes() {
+    async setRoute() {
       const routes = [];
       for (const route of this.allRoutes) {
         if (route.access <= this.actual) {
@@ -107,30 +116,32 @@ export default {
           for (const wildURL of wilds) {
             const wild = allWilds[wildURL.split(' ')[0]];
 
-            if (wild.lvl <= this.level) {
-              if (wild.mode == mode) {
-                if (!allSpecies[wild.specie]) {
-                  const specieProxy = await axios.get(`http://127.0.0.1:8000/api/species/${wild.specie}/`);
-                  allSpecies[wild.specie] = specieProxy.data;
+            if (this.time == 'a' || wild.time == 'a' || this.time == wild.time) {
+              if (wild.lvl <= this.level) {
+                if (wild.mode == mode) {
+                  if (!allSpecies[wild.specie]) {
+                    const specieProxy = await axios.get(`http://127.0.0.1:8000/api/species/${wild.specie}/`);
+                    allSpecies[wild.specie] = specieProxy.data;
+                  }
+
+                  wilds_here.push(wild);
+
+                  let specie = allSpecies[wild.specie];
+                  species[wild.specie] = allSpecies[wild.specie];
+
+                  let xp = generation > 4 ? specie.xp : specie.xp1_4;
+
+                  if (generation <= 4 || generation == 6) {
+                    sum += (wild.lvl * xp * wild.probability) / 700;
+                    allXP[wild.id] = Math.round((wild.lvl * xp) / 7);
+                  } else {
+                    sum += (wild.lvl * xp / 5 * Math.pow((2 * wild.lvl + 10) / (wild.lvl + 10), 2.5) + 1) * wild.probability / 100;
+                    allXP[wild.id] = Math.round(wild.lvl * xp / 5 * Math.pow((2 * wild.lvl + 10) / (wild.lvl + 10), 2.5) + 1);
+                  }
                 }
-
-                wilds_here.push(wild);
-
-                let specie = allSpecies[wild.specie];
-                species[wild.specie] = allSpecies[wild.specie];
-
-                let xp = generation > 4 ? specie.xp : specie.xp1_4;
-
-                if (generation <= 4 || generation == 6) {
-                  sum += (wild.lvl * xp * wild.probability) / 700;
-                  allXP[wild.id] = Math.round((wild.lvl * xp) / 7);
-                } else {
-                  sum += (wild.lvl * xp / 5 * Math.pow((2 * wild.lvl + 10) / (wild.lvl + 10), 2.5) + 1) * wild.probability / 100;
-                  allXP[wild.id] = Math.round(wild.lvl * xp / 5 * Math.pow((2 * wild.lvl + 10) / (wild.lvl + 10), 2.5) + 1);
-                }
+              } else {
+                sum = -10000;
               }
-            } else {
-              sum = -10000;
             }
           }
 

@@ -1,11 +1,9 @@
 <template>
-    <div>
-        <div id="poke-level-min">
-            <div>Niveau maximum souhaité :</div>
-            <input type="number" min="1" max="100" :value="level" @input="$emit('setLevel', $event.target.value)" />
-        </div>
-        <DataRoute :route="route" :wilds="wilds" :species="species" :allXP="allXP" :mean="mean" :mode="mode" />
+    <div id="poke-level-min">
+        <div>Niveau maximum souhaité :</div>
+        <input type="number" min="1" max="100" :value="level" @input="$emit('setLevel', $event.target.value)" />
     </div>
+    <DataRoute :route="route" :wilds="wilds" :species="species" :allXP="allXP" :mean="mean" :mode="mode" />
 </template>
 
 <script>
@@ -20,8 +18,6 @@ export default {
 </script>
 
 <style>
-
-
 #poke-level-min {
     position: absolute;
     display: flex;
