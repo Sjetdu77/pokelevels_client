@@ -6,9 +6,11 @@
 
     <main>
       <GameList @setActive="onSetActive" :games="games" :active="active" />
-      <MainComponent v-if="route && wilds && species"
-        @setAccess="setAccess" @setLevel="setLevel" :active="active" :accesses="accesses" :actual="actual"
-        :route="route" :wilds="wilds" :species="species" :level="level" :allXP="allXP" :mean="mean" />
+      <div id="poke-main" v-if="route && wilds && species">
+        <MainComponent @setLevel="setLevel" :route="route" :wilds="wilds" :species="species"
+          :level="level" :allXP="allXP" :mean="mean" :mode="mode" />
+        <AccessList @setAccess="setAccess" :accesses="accesses" :actual="actual" />
+      </div>
       <div id="poke-choose" v-else-if="!active.id">Choisissez un jeu</div>
     </main>
   </div>
@@ -18,6 +20,7 @@
 import GameList from './components/GameList.vue';
 import PokeHeader from './components/PokeHeader.vue';
 import MainComponent from './components/MainComponent.vue';
+import AccessList from './components/AccessList.vue'
 import axios from 'axios';
 
 export default {
@@ -25,7 +28,8 @@ export default {
   components: {
     PokeHeader,
     GameList,
-    MainComponent
+    MainComponent,
+    AccessList
   },
   data() {
     return {
@@ -39,6 +43,7 @@ export default {
       wilds: null,
       allXP: null,
       mean: null,
+      mode: '',
       species: {},
       level: 100
     }
@@ -90,45 +95,53 @@ export default {
         }
       }
 
-      let bestSum = 0, bestRoute, goodWilds, goodSpecies = {}, generation = this.active.generation, goodXP = {};
+      const wildsProxy = await axios.get(`http://127.0.0.1:8000/api/wilds/`);
+      const allWilds = wildsProxy.data;
+
+      let bestSum = 0, bestRoute, goodWilds, goodSpecies = {}, generation = this.active.generation, goodXP = {}, goodMode = '';
+      let allSpecies = {};
       for (const route of routes) {
-        let sum = 0, species = {}, wilds_here = [], allXP = [];
-        const wilds = route.wilds;
-        for (const wildURL of wilds) {
-          const allWildWords = wildURL.split(' ');
-          const wildProxy = await axios.get(`http://127.0.0.1:8000/api/wilds/${allWildWords[0]}/`);
-          const wild = wildProxy.data;
+        for (const mode of ['gs', 'sf']) {
+          let sum = 0, species = {}, wilds_here = [], allXP = [];
+          const wilds = route.wilds;
+          for (const wildURL of wilds) {
+            const wild = allWilds[wildURL.split(' ')[0]];
 
-          wilds_here.push(wild);
+            if (wild.lvl <= this.level) {
+              if (wild.mode == mode) {
+                if (!allSpecies[wild.specie]) {
+                  const specieProxy = await axios.get(`http://127.0.0.1:8000/api/species/${wild.specie}/`);
+                  allSpecies[wild.specie] = specieProxy.data;
+                }
 
-          if (wild.lvl <= this.level) {
-            if (wild.mode == 'gs') {
-              const specieProxy = await axios.get(`http://127.0.0.1:8000/api/species/${wild.specie}/`);
-              const specie = specieProxy.data;
+                wilds_here.push(wild);
 
-              species[wild.specie] = specie;
+                let specie = allSpecies[wild.specie];
+                species[wild.specie] = allSpecies[wild.specie];
 
-              let xp = generation > 4 ? specie.xp : specie.xp1_4;
+                let xp = generation > 4 ? specie.xp : specie.xp1_4;
 
-              if (generation <= 4 || generation == 6) {
-                sum += (wild.lvl * xp * wild.probability) / 700;
-                allXP[wild.id] = Math.round((wild.lvl * xp) / 7);
-              } else {
-                sum += (wild.lvl * xp / 5 * Math.pow((2 * wild.lvl + 10) / (wild.lvl + 10), 2.5) + 1) * wild.probability / 100;
-                allXP[wild.id] = Math.round(wild.lvl * xp / 5 * Math.pow((2 * wild.lvl + 10) / (wild.lvl + 10), 2.5) + 1);
+                if (generation <= 4 || generation == 6) {
+                  sum += (wild.lvl * xp * wild.probability) / 700;
+                  allXP[wild.id] = Math.round((wild.lvl * xp) / 7);
+                } else {
+                  sum += (wild.lvl * xp / 5 * Math.pow((2 * wild.lvl + 10) / (wild.lvl + 10), 2.5) + 1) * wild.probability / 100;
+                  allXP[wild.id] = Math.round(wild.lvl * xp / 5 * Math.pow((2 * wild.lvl + 10) / (wild.lvl + 10), 2.5) + 1);
+                }
               }
+            } else {
+              sum = -10000;
             }
-          } else {
-            sum = -10000;
           }
-        }
 
-        if (sum > bestSum) {
-          bestSum = sum;
-          bestRoute = route;
-          goodWilds = wilds_here;
-          goodSpecies = species;
-          goodXP = allXP;
+          if (sum > bestSum) {
+            bestSum = sum;
+            bestRoute = route;
+            goodWilds = wilds_here;
+            goodSpecies = species;
+            goodXP = allXP;
+            goodMode = mode;
+          }
         }
       }
 
@@ -137,6 +150,7 @@ export default {
       this.species = goodSpecies;
       this.allXP = goodXP;
       this.mean = Math.round(bestSum);
+      this.mode = goodMode;
     }
   }
 }
@@ -163,5 +177,14 @@ export default {
     left: 50%;
     position: absolute;
     margin: 0;
+}
+
+#poke-main {
+    position: absolute;
+    background-color: #eee;
+    bottom: 0;
+    right: 0;
+    width: calc(75% - 32px);
+    height: calc(87.5vh - 20px);
 }
 </style>

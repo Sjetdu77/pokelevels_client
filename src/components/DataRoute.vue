@@ -1,6 +1,7 @@
 <template>
     <div id="poke-data-route" v-if="route">
-        <div id="poke-data-title">{{ route.name }}</div>
+        <div id="poke-data-title" v-if="mode == 'gs'">{{ route.name }}</div>
+        <div id="poke-data-title" v-else-if="mode == 'sf'">{{ route.name }} - En surfant</div>
         <div id="poke-group-card">
             <DataSpecieCard v-for="wild of wilds" :key="wild.id" :specie="species[wild.specie]" :wild="wild" :xp="allXP[wild.id]" />
         </div>
@@ -13,7 +14,7 @@ import DataSpecieCard from "./DataSpecieCard.vue"
 
 export default {
     name: "DataRoute",
-    props: ['route', 'wilds', 'species', 'allXP', 'mean'],
+    props: ['route', 'wilds', 'species', 'allXP', 'mean', 'mode'],
     components: { DataSpecieCard }
 }
 </script>
